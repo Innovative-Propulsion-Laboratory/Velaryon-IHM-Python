@@ -1,0 +1,1 @@
+This Velaryon Human-Machine Interface is developed in Python, primarily using the PyQt5 library. While the code functions as intended, it is clearly not optimized due to a transition to Qt C++. Further improvements are necessary for future use.
