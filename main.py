@@ -16,7 +16,6 @@ Creation 28/07/2024:
 
 Update 03/08/2024: 
     -   Date and time + chronometer since the launch of the HMI
-    -   Minesweeper
     -   Pressure control 
     -   Actuator control + central angle computation
     -   Sequence definition + right click on graph for more options like export graph
@@ -29,20 +28,22 @@ Update 04/08/2024:
 
 Update 07/08/2024:
     -   Fix graph issues + removing of unecessary
-    -   Fix some names and displays + display of valve name for seQuence chronograph (will change To match the original names)
-    -   Specific Csv based on date
+    -   Fix some names and displays + display of valve name for seQuence chronograph (will change to match the original names)
+    -   Specific csv based on date
     -   Actuator button to send the values
 
-Note: ExcePt for the valves, nothing was tested with a real MC board communication
+Note: Except for the valves, nothing was tested with a real MC board communication
 
-New uPdate IncomiNg :
-    -   MC board Communication using byte arrays + errOr Management
-    -   Update of the length-central angle relatIon relation from DMUK data
-    -   CommeNts
-    -   Options (solenoid valves/actuator voltaGes)
+New update incoming :
+    -   MC board communication using byte arrays + error Management
+    -   Update of the length-central angle relation relation from DMUK data
+    -   Comments
+    -   Options (solenoid valves/actuator voltages)
 
 Ideas :
-    -   Cooldown before ingition (MC board or using sequence)
+    -   Cooldown before ignition (MC board or using sequence)
+
+Update: Following the demonstrated efficiency of the C++ version of the interface, along with the many optimizations implemented on the DAQ and control systems, this Python version was ultimately never used for engine operations.
 """
 
 
@@ -1222,8 +1223,6 @@ class Main(object):
                 self.label = QLabel(tab)
                 self.label.setStyleSheet("background-color: transparent;")
                 self.label.setGeometry(1600, 50, 500, 100)
-                self.label.setCursor(Qt.PointingHandCursor)
-                self.label.mousePressEvent = self.on_label_click
 
         self.worker = Worker()
         self.worker_thread = threading.Thread(target=self.worker.write_csv_arduino)
@@ -1465,10 +1464,6 @@ class Main(object):
         name_map = {0: "ETH", 1: "LOX", 2: "H2O"}
         name = name_map.get(index, "Unknown")
         self.launch_labels[index].setText(f"{name} Pressure: {value} bar")
-        
-    def on_label_click(self,event):
-        self.new_window = Minesweeper()
-        self.new_window.show()
 
     def Update_Elapsed_Time(self):
         currentDateTime = QDateTime.currentDateTime()
@@ -2172,95 +2167,6 @@ class SplashScreen(QSplashScreen):
     def update_progress(self, value):
         self.progress_bar.setValue(value)
         self.percent_label.setText(f"{value}%")
-
-class Minesweeper(QMainWindow):
-    def __init__(self, rows=20, cols=20, mines=50):
-        super().__init__()
-        self.rows = rows
-        self.cols = cols
-        self.mines = mines
-        self.buttons = []
-        self.minefield = [[0] * cols for _ in range(rows)]
-        self.revealed = [[False] * cols for _ in range(rows)]
-        self.setup_ui()
-        self.place_mines()
-
-    def setup_ui(self):
-        self.setWindowTitle('Minesweeper')
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        layout = QGridLayout()
-        central_widget.setLayout(layout)
-
-        for row in range(self.rows):
-            button_row = []
-            for col in range(self.cols):
-                button = QPushButton('')
-                button.setFixedSize(30, 30)
-                button.setStyleSheet("background-color: lightgray;")
-                button.clicked.connect(lambda _, r=row, c=col: self.reveal(r, c))
-                layout.addWidget(button, row, col)
-                button_row.append(button)
-            self.buttons.append(button_row)
-
-        self.setGeometry(100, 100, self.cols * 30, self.rows * 30)
-
-    def place_mines(self):
-        locations = random.sample(range(self.rows * self.cols), self.mines)
-        for location in locations:
-            r = location // self.cols
-            c = location % self.cols
-            self.minefield[r][c] = -1
-            for dr in (-1, 0, 1):
-                for dc in (-1, 0, 1):
-                    if dr == 0 and dc == 0:
-                        continue
-                    nr, nc = r + dr, c + dc
-                    if 0 <= nr < self.rows and 0 <= nc < self.cols and self.minefield[nr][nc] != -1:
-                        self.minefield[nr][nc] += 1
-
-    def reveal(self, row, col):
-        if self.minefield[row][col] == -1:
-            QMessageBox.critical(self, 'Game Over', 'You hit a mine!')
-            self.reveal_all_mines()
-            return
-
-        self._reveal_cell(row, col)
-        if all(self.is_cell_revealed(r, c) or self.minefield[r][c] == -1
-               for r in range(self.rows)
-               for c in range(self.cols)):
-            QMessageBox.information(self, 'Congratulations', 'You win!')
-
-    def _reveal_cell(self, row, col):
-        if not (0 <= row < self.rows and 0 <= col < self.cols):
-            return
-        if self.revealed[row][col]:
-            return
-
-        self.revealed[row][col] = True
-        button = self.buttons[row][col]
-
-        if self.minefield[row][col] == 0:
-            button.setText('')
-            button.setStyleSheet("background-color: white;")
-            for dr in (-1, 0, 1):
-                for dc in (-1, 0, 1):
-                    if dr == 0 and dc == 0:
-                        continue
-                    self._reveal_cell(row + dr, col + dc)
-        else:
-            button.setText(str(self.minefield[row][col]))
-            button.setStyleSheet("background-color: white;")
-
-    def is_cell_revealed(self, row, col):
-        return self.revealed[row][col]
-
-    def reveal_all_mines(self):
-        for r in range(self.rows):
-            for c in range(self.cols):
-                if self.minefield[r][c] == -1:
-                    self.buttons[r][c].setText('*')
-                    self.buttons[r][c].setStyleSheet("background-color: red;")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
